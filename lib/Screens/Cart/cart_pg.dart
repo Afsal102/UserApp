@@ -191,6 +191,7 @@ Widget cartItems(CartModel cartModel, CartController cartController) {
   );
 }
 
+
 Widget quantity() {
   return Container(
     child: Row(
