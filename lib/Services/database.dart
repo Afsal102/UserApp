@@ -357,7 +357,7 @@ class Database {
     await querycart(productModel).then((value) async {
       if (value.docs.isNotEmpty) {
         value.docs.forEach((element) async {
-          await updatecart(element.id, model);
+          await updatecart(element.id, model.prodQuantity);
         });
       } else {
         FirebaseFirestore.instance
@@ -381,9 +381,9 @@ class Database {
   }
   //!query specific cart itme
 
-  Future updatecart(String docid, CartModel model) async {
+  Future updatecart(String docid, int quanttity) async {
     await FirebaseFirestore.instance.collection('Cart').doc(docid).update({
-      'prodQuantity': model.prodQuantity,
+      'prodQuantity': quanttity,
       'date': DateFormat.yMd().format(DateTime.now()).toString(),
       'time': DateFormat.jms().format(DateTime.now()).toString()
     });
@@ -397,7 +397,7 @@ class Database {
         .map(_cartMapToModel);
   }
 
-  //!conver map to models
+  //!convert map to models
   List<CartModel> _cartMapToModel(QuerySnapshot snapshot) {
     return snapshot.docs.map((e) {
       return CartModel(
@@ -410,4 +410,6 @@ class Database {
       );
     }).toList();
   }
+
+  //!delete From Cart
 }

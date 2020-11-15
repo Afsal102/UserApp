@@ -32,6 +32,7 @@ class ProductModel {
 
   final isFavourite = false.obs;
   final wishId = ''.obs;
+  final quantityperProduct = 0.obs;
 
 
 }

@@ -19,73 +19,78 @@ class CartPage extends StatelessWidget {
     return DefaultTextStyle(
       style: GoogleFonts.raleway(),
       child: Scaffold(
-        bottomNavigationBar: bottomAppbar(cartController),
-        backgroundColor: Colors.grey[300],
-        appBar: AppBar(
-          title: Text('My Cart'),
-          leading: IconButton(
-            icon: Icon(OMIcons.chevronLeft),
-            onPressed: () {
-              Get.back();
-            },
-          ),
-          elevation: 0.0,
-          automaticallyImplyLeading: false,
-          toolbarOpacity: 0.8,
-          actions: [
-            DefaultTextStyle(
-              style: GoogleFonts.raleway(fontSize: 14),
-              child: Container(
-                  margin: EdgeInsets.only(right: 10),
-                  child: Center(
-                      child: Text(
-                    'Deleted',
-                    style: TextStyle(fontSize: 16),
-                  ))),
-            )
-          ],
-        ),
-        body: GetX<CartController>(
-          builder: (contrller) {
-            if (contrller != null) {
-              return contrller.showLoading.value
-                  ? Center(child: Loading())
-                  : SafeArea(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              height: MediaQuery.of(context).size.height,
-                              child: GetX<CartController>(
-                                builder: (controller) {
-                                  if (controller != null &&
-                                      controller.cartprods != null)
-                                    return ListView.builder(
-                                        itemBuilder: (context, index) {
-                                          return cartItems(
-                                              controller.cartprods[index],
-                                              controller);
-                                        },
-                                        itemCount:
-                                            controller.cartprods.length ?? 0);
-                                  else
-                                    return Offstage();
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-            } else
-              return Offstage();
-          },
-        ),
+          bottomNavigationBar: bottomAppbar(cartController),
+          backgroundColor: Colors.grey[300],
+          appBar: buildAppBar(),
+          body: SingleChildScrollView(
+            physics: BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height,
+                  child: Carts(),
+                ),
+              ],
+            ),
+          )),
+    );
+  }
+
+//!AppBar
+  AppBar buildAppBar() {
+    return AppBar(
+      toolbarHeight: kToolbarHeight + 15,
+      backgroundColor: Colors.blueGrey[900].withOpacity(0.8),
+      title: Container(
+          padding: EdgeInsets.all(10),
+          child: Text('My Cart(${cartController.cartprods.length})')),
+      leading: IconButton(
+        icon: Icon(OMIcons.chevronLeft),
+        onPressed: () {
+          Get.back();
+        },
       ),
+      elevation: 0.0,
+      automaticallyImplyLeading: false,
+      toolbarOpacity: 0.8,
+      actions: [
+        Container(
+            margin: EdgeInsets.only(right: 10),
+            child: Center(
+                child: Text(
+              'Delete',
+              style: TextStyle(fontSize: 16),
+            )))
+      ],
     );
   }
 }
 
+//!Cart Builder
+class Carts extends StatelessWidget {
+  const Carts({
+    Key key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GetX<CartController>(
+      builder: (controller) {
+        if (controller != null && controller.cartprods != null)
+          return ListView.builder(
+              physics: NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                return cartItems(controller.cartprods[index], controller);
+              },
+              itemCount: controller.cartprods.length ?? 0);
+        else
+          return Offstage();
+      },
+    );
+  }
+}
+
+//!Cart Items ??
 Widget cartItems(CartModel cartModel, CartController cartController) {
   ProductModel productModel;
   final faker = Faker();
@@ -94,14 +99,21 @@ Widget cartItems(CartModel cartModel, CartController cartController) {
       productModel = element;
     }
   });
+  cartController.productsAddedInCart.forEach((element) {
+    if (element.prodId == cartModel.prodId) {
+      cartModel.selectedItem.value = true;
+      element.quantityperProduct.value = cartModel.prodQuantity;
+    }
+  });
+
   return Card(
-    shadowColor: Colors.blueGrey.shade600,
-    margin: EdgeInsets.all(8.8),
+    shadowColor: Colors.blueGrey.shade600.withOpacity(0.5),
+    margin: EdgeInsets.all(4.0),
     clipBehavior: Clip.antiAlias,
     // shape: RoundedRectangleBorder(
     //     borderRadius: BorderRadius.all(Radius.circular(10))),
     borderOnForeground: true,
-    elevation: 4.0,
+    elevation: .0,
     child: Container(
       padding: EdgeInsets.all(7.5),
       child: Row(
@@ -110,6 +122,7 @@ Widget cartItems(CartModel cartModel, CartController cartController) {
               width: 35,
               child: IconButton(
                 icon: GetX<CartController>(
+                  initState: (state) {},
                   builder: (controller) {
                     if (controller != null)
                       return cartModel.selectedItem.value
@@ -131,7 +144,8 @@ Widget cartItems(CartModel cartModel, CartController cartController) {
                     await cartController.removeThisitem(productModel);
                   } else {
                     cartModel.selectedItem.toggle();
-                    await cartController.selectThisItem(productModel);
+                    await cartController.selectThisItem(
+                        productModel, cartModel);
                   }
                 },
               )),
@@ -141,9 +155,12 @@ Widget cartItems(CartModel cartModel, CartController cartController) {
           SizedBox(
             width: 100,
             height: 100,
-            child: CachedNetworkImage(
-              imageUrl: productModel.imageLink,
-              fit: BoxFit.cover,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: CachedNetworkImage(
+                imageUrl: productModel.imageLink,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           SizedBox(
@@ -179,7 +196,7 @@ Widget cartItems(CartModel cartModel, CartController cartController) {
                                     fontSize: 12))
                           ]),
                     ),
-                    quantity(),
+                    quantity(cartModel, cartController, productModel),
                   ],
                 ),
               ],
@@ -191,17 +208,25 @@ Widget cartItems(CartModel cartModel, CartController cartController) {
   );
 }
 
-
-Widget quantity() {
+Widget quantity(CartModel cartModel, CartController conttroller,
+    ProductModel productModel) {
   return Container(
     child: Row(
       children: [
         IconButton(
-            icon: Icon(
-              OMIcons.remove,
-              size: 19,
-            ),
-            onPressed: () {}),
+            icon: cartModel.prodQuantity > 1
+                ? Icon(
+                    OMIcons.remove,
+                    size: 19,
+                  )
+                : Icon(
+                    OMIcons.remove,
+                    size: 19,
+                    color: Colors.transparent,
+                  ),
+            onPressed: () async {
+              await conttroller.reduceItem(cartModel);
+            }),
         Container(
           padding: EdgeInsets.all(3.0),
           decoration: BoxDecoration(
@@ -212,18 +237,26 @@ Widget quantity() {
             height: 15,
             child: Center(
               child: Text(
-                '1',
+                '${cartModel.prodQuantity}',
                 style: TextStyle(color: Colors.white),
               ),
             ),
           ),
         ),
         IconButton(
-            icon: Icon(
-              OMIcons.add,
-              size: 19,
-            ),
-            onPressed: () {}),
+            icon: cartModel.prodQuantity < int.parse(productModel.availableQty)
+                ? Icon(
+                    OMIcons.add,
+                    size: 19,
+                  )
+                : Icon(
+                    OMIcons.add,
+                    size: 19,
+                    color: Colors.transparent,
+                  ),
+            onPressed: () async {
+              await conttroller.increaseItem(cartModel);
+            }),
       ],
     ),
   );
@@ -278,6 +311,30 @@ Widget bottomAppbar(CartController cartController) {
             SizedBox(
               width: 10,
             ),
+            Obx(() => RichText(
+                    text: TextSpan(
+                        text: 'Shipping:\t',
+                        style: TextStyle(color: Colors.black, fontSize: 11),
+                        children: [
+                      TextSpan(
+                          text: 'Rs 0.0',
+                          style:
+                              TextStyle(color: Colors.deepOrangeAccent[400])),
+                      TextSpan(
+                          text: '\nTotal:',
+                          style: TextStyle(fontSize: 14),
+                          children: [
+                            TextSpan(
+                                text: '\tRs. ${cartController.totPrice}',
+                                style: TextStyle(
+                                    color: Colors.deepOrange[900],
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold))
+                          ]),
+                    ]))),
+            SizedBox(
+              width: 10,
+            ),
             Expanded(
                 child: rasiedButton('Buy Now', null, () {
               // cartController.showLoading.toggle();
@@ -287,7 +344,6 @@ Widget bottomAppbar(CartController cartController) {
                 useSafeArea: false,
                 barrierDismissible: false,
                 name: 'Omg',
-                
               );
               Future.delayed(Duration(seconds: 5), () {
                 Get.back(canPop: true);

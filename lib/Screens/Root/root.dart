@@ -11,7 +11,7 @@ class Root extends StatelessWidget {
   final List<Widget> _cureentPage = [Home(), Search(), Orders(), Profile()];
   final rootController =
       Get.lazyPut<RootNavController>(() => RootNavController());
-  final cartController = Get.lazyPut<CartController>(() => CartController());
+  final cartController = Get.put<CartController>(CartController());
   @override
   Widget build(BuildContext context) {
     return Scaffold(

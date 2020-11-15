@@ -27,7 +27,7 @@ class Search extends StatelessWidget {
             ),
             FlatButton(
                 onPressed: () {
-                  Logger().i(Get.find<CartController>().totPrice);
+                  // Logger().i(Get.find<CartController>().finallsall.value);
                 },
                 child: Text('Hello'))
           ],

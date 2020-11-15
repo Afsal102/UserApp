@@ -97,4 +97,6 @@ class CartModel {
 
   final productmodel = ProductModel().obs;
   final selectedItem = false.obs;
+  final total = 0.0.obs;
+
 }
