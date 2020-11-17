@@ -9,6 +9,7 @@ import 'package:groceryuser/Models/cart_model.dart';
 import 'package:groceryuser/Models/productmodel.dart';
 import 'package:groceryuser/Models/user_model.dart';
 import 'package:groceryuser/Models/wishlistmodel.dart';
+import 'package:groceryuser/components/loading.dart';
 import 'package:groceryuser/components/pincode.dart';
 import 'package:groceryuser/components/snackbar.dart';
 import 'package:groceryuser/main.dart';
@@ -412,4 +413,17 @@ class Database {
   }
 
   //!delete From Cart
+  Future deleteFromCart(ProductModel productModel) async {
+    // return FirebaseFirestore.instance.collection('Cart').doc(cartModel.id).delete();
+
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('Cart')
+        .where('prodId', isEqualTo: productModel.prodId)
+        .get();
+
+    snapshot.docs.forEach((element) {
+      FirebaseFirestore.instance.collection('Cart').doc(element.id).delete();
+    });
+  }
+  
 }

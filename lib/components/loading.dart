@@ -12,13 +12,15 @@ class Loading extends StatelessWidget {
         // height: MediaQuery.of(context).size.height/2,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: Colors.purple[100].withOpacity(0.3),
+          // color: Colors.purple[100].withOpacity(0.3),
+
+          color: Colors.black.withOpacity(0.3),
         ),
 
         child: Center(
-          child: SpinKitWave(
-            color: Colors.purple,
-            size: 50.0,
+          child: SpinKitFadingCircle(
+            color: Colors.white,
+            size: 60.0,
           ),
         ),
       ),

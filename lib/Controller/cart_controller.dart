@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:groceryuser/Controller/product_controller.dart';
 import 'package:groceryuser/Models/cart_model.dart';
@@ -93,5 +94,22 @@ class CartController extends GetxController {
 
   closeDialog() {
     if (Get.isDialogOpen) Get.back();
+  }
+
+  //!delete from cart
+  Future deleteFromCart() async {
+    if (productsAddedInCart.isNotEmpty) {
+      productsAddedInCart.forEach((element) async {
+        await Database().deleteFromCart(element);
+      });
+      if (productsAddedInCart.isNotEmpty) {
+        productsAddedInCart.clear();
+        Get.snackbar('Deleted', 'Deleted item');
+        allSelected.value = false;
+      }
+    } else {
+      Get.snackbar('No Items', 'No items To delete From cart',
+          backgroundColor: Colors.blueGrey);
+    }
   }
 }

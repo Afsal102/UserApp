@@ -1,35 +1,74 @@
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:groceryuser/Controller/cart_controller.dart';
+import 'package:groceryuser/Controller/loginController.dart';
 import 'package:groceryuser/Models/cart_model.dart';
 import 'package:groceryuser/Models/productmodel.dart';
+import 'package:groceryuser/Screens/Signup/components/or_divider.dart';
 import 'package:groceryuser/Screens/SingleProducts/singleproductspage.dart';
+import 'package:groceryuser/Services/database.dart';
+import 'package:groceryuser/components/FocusedMenuWrapper.dart';
+import 'package:groceryuser/components/gridTile.dart';
 import 'package:groceryuser/components/loading.dart';
 import 'package:logger/logger.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
 
 class CartPage extends StatelessWidget {
   final cartController = Get.find<CartController>();
+  final scrollControllr = ScrollController();
+
   @override
   Widget build(BuildContext context) {
+    final double itemWidth = MediaQuery.of(context).size.width / 2;
+
     return DefaultTextStyle(
       style: GoogleFonts.raleway(),
       child: Scaffold(
           bottomNavigationBar: bottomAppbar(cartController),
-          backgroundColor: Colors.grey[300],
+          backgroundColor: Colors.grey[400].withOpacity(.9),
           appBar: buildAppBar(),
           body: SingleChildScrollView(
             physics: BouncingScrollPhysics(),
+            scrollDirection: Axis.vertical,
             child: Column(
               children: [
-                SizedBox(
-                  height: MediaQuery.of(context).size.height,
-                  child: Carts(),
+                GetX<CartController>(
+                  builder: (controller) {
+                    if (controller != null) {
+                      return controller.cartprods.isEmpty
+                          ? Container(
+                              margin: EdgeInsets.only(bottom: 10),
+                              child: Center(
+                                  child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.no_stroller,
+                                    color: Colors.brown[900],
+                                    size: 80,
+                                  ),
+                                  Text('Its Empty'),
+                                ],
+                              )),
+                            )
+                          : Carts();
+                    }
+                    return Offstage();
+                  },
                 ),
+                OrDivider(
+                  text: '!Just For You!',
+                  color: Colors.orange,
+                  textColor: Colors.indigo[900].withRed(10),
+                  thickness: 2.9,
+                  fontSize: 19,
+                ),
+                GridItemsForCart(itemWidth: itemWidth)
               ],
             ),
           )),
@@ -43,7 +82,8 @@ class CartPage extends StatelessWidget {
       backgroundColor: Colors.blueGrey[900].withOpacity(0.8),
       title: Container(
           padding: EdgeInsets.all(10),
-          child: Text('My Cart(${cartController.cartprods.length})')),
+          child:
+              Obx(() => Text('My Cart(${cartController.cartprods.length})'))),
       leading: IconButton(
         icon: Icon(OMIcons.chevronLeft),
         onPressed: () {
@@ -56,19 +96,142 @@ class CartPage extends StatelessWidget {
       actions: [
         Container(
             margin: EdgeInsets.only(right: 10),
-            child: Center(
-                child: Text(
-              'Delete',
-              style: TextStyle(fontSize: 16),
-            )))
+            child: IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () async {
+                await cartController.deleteFromCart();
+              },
+            )),
       ],
     );
   }
 }
 
+class GridItemsForCart extends StatelessWidget {
+  const GridItemsForCart({
+    Key key,
+    @required this.itemWidth,
+  }) : super(key: key);
+
+  final double itemWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return GetX<CartController>(
+      builder: (controller) {
+        if (controller != null) {
+          return controller.proucts.isNotEmpty
+              ? Container(
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    reverse: true,
+                    cacheExtent: 1000,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: (300 / itemWidth) / 2,
+                        mainAxisSpacing: 9,
+                        crossAxisSpacing: 7),
+                    // controller: scrollControllr,
+                    physics: NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.all(10),
+                    itemCount: controller.proucts.length ?? 0,
+                    itemBuilder: (context, index) {
+                      return GetX<CartController>(
+                        initState: (_) async {
+                          //!Querying the favourites and checking if this id matches the id in favourites and the reutrn snapshot
+                          QuerySnapshot snapshot = await Database().getWishList(
+                              controller.proucts[index].prodId,
+                              Get.find<LoginConroller>().user.uid);
+
+                          if (snapshot.docs.isNotEmpty) {
+                            controller.proucts[index].isFavourite.value = true;
+                            controller.proucts[index].wishId.value =
+                                snapshot.docs[0].id;
+                          }
+                        },
+                        builder: (_) {
+                          return FocusedMenuItemHolder(
+                            onAddToCartPressed: ()async{
+                              Logger().i('Add t ocart pressed');
+                             await Database().addtoCart(controller.proucts[index]);
+                            },
+                            icon: controller.proucts[index].isFavourite.value
+                                ? Icon(
+                                    Icons.favorite,
+                                    color: Colors.red,
+                                  )
+                                : Icon(Icons.favorite_border),
+                            onPressed: () async {
+                              showDialog();
+
+                              try {
+                                if (controller
+                                        .proucts[index].isFavourite.value ==
+                                    true) {
+                                  await Database()
+                                      .deleteFromWishList(controller
+                                          .proucts[index].wishId.value)
+                                      .then((value) {
+                                    controller.proucts[index].isFavourite
+                                        .toggle();
+                                        cloeDialog();
+                                  });
+                                } else {
+                                  controller.proucts[index].isFavourite
+                                      .toggle();
+                                  if (await Database().addFavourites(
+                                      controller.proucts[index],
+                                      Get.find<LoginConroller>()
+                                          .user
+                                          .uid
+                                          .toString())) {
+                                    cloeDialog();
+                                    Get.snackbar('Favourite List',
+                                        'New product Added to wish List');
+                                  }
+                                }
+                              } on FirebaseException catch (e) {
+                                cloeDialog();
+                                Logger().e(e.message.toUpperCase());
+                              } catch (e) {
+                                cloeDialog();
+                                Logger().e(e.toString().toUpperCase());
+                              }
+                            },
+                            child: GridCard(
+                              productModel: controller.proucts[index],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                )
+              : Offstage();
+        }
+        return Offstage();
+      },
+    );
+  }
+}
+
+showDialog() {
+  Get.dialog(
+    Loading(),
+    useSafeArea: false,
+    barrierDismissible: false,
+    name: 'Omg',
+    transitionDuration: Duration(seconds: 1),
+  );
+}
+
+cloeDialog() {
+  if (Get.isDialogOpen) Get.back();
+}
+
 //!Cart Builder
 class Carts extends StatelessWidget {
-  const Carts({
+  Carts({
     Key key,
   }) : super(key: key);
 
@@ -78,6 +241,7 @@ class Carts extends StatelessWidget {
       builder: (controller) {
         if (controller != null && controller.cartprods != null)
           return ListView.builder(
+              shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
               itemBuilder: (context, index) {
                 return cartItems(controller.cartprods[index], controller);
@@ -107,8 +271,9 @@ Widget cartItems(CartModel cartModel, CartController cartController) {
   });
 
   return Card(
+    color: Colors.white.withOpacity(0.7),
     shadowColor: Colors.blueGrey.shade600.withOpacity(0.5),
-    margin: EdgeInsets.all(4.0),
+    margin: EdgeInsets.all(10.0).copyWith(bottom: 0.0),
     clipBehavior: Clip.antiAlias,
     // shape: RoundedRectangleBorder(
     //     borderRadius: BorderRadius.all(Radius.circular(10))),
@@ -138,7 +303,6 @@ Widget cartItems(CartModel cartModel, CartController cartController) {
                   },
                 ),
                 onPressed: () async {
-                  Logger()..i('Clickd Radio');
                   if (cartModel.selectedItem.value) {
                     cartModel.selectedItem.toggle();
                     await cartController.removeThisitem(productModel);
@@ -152,14 +316,23 @@ Widget cartItems(CartModel cartModel, CartController cartController) {
           SizedBox(
             width: 5,
           ),
+          //!Image
           SizedBox(
             width: 100,
             height: 100,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: CachedNetworkImage(
-                imageUrl: productModel.imageLink,
-                fit: BoxFit.cover,
+            child: Container(
+              decoration: BoxDecoration(
+                  gradient:
+                      LinearGradient(begin: Alignment.bottomRight, colors: [
+                Colors.black.withOpacity(.4),
+                Colors.black.withOpacity(.2),
+              ])),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: CachedNetworkImage(
+                  imageUrl: productModel.imageLink,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
@@ -290,9 +463,9 @@ Widget bottomAppbar(CartController cartController) {
                 }, child: GetX<CartController>(
                   builder: (controller) {
                     if (controller != null) {
-                      return controller.allSelected.value &&
-                              controller.productsAddedInCart.length ==
-                                  controller.cartprods.length
+                      return controller.productsAddedInCart.length ==
+                                  controller.cartprods.length &&
+                              controller.cartprods.length != 0
                           ? Icon(
                               OMIcons.checkCircleOutline,
                               color: Colors.orange,

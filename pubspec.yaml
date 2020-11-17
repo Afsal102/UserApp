@@ -41,6 +41,7 @@ dependencies:
   firebase_database: ^4.3.0
   firebase_storage: ^5.0.1
   flutter_spinkit: ^4.1.2+1
+  focused_menu: ^1.0.1
   flutter_svg: ^0.19.1
   get: ^3.15.0
   device_preview: ^0.5.4

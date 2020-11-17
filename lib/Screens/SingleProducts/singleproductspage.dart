@@ -332,7 +332,7 @@ TextStyle fontInterface(double fontSize, Color color) {
       fontSize: fontSize ?? 13, color: color ?? Colors.black);
 }
 
-//!Review Caad
+//!Review Card
 Widget reviewCard(ProductModel model, BuildContext context) {
   return Container(
     child: Column(
