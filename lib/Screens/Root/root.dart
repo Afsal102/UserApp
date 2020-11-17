@@ -37,8 +37,8 @@ class Root extends StatelessWidget {
                 backgroundColor: Colors.blue,
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.book),
-                label: 'Orders',
+                icon: Icon(Icons.shopping_cart),
+                label: 'Cart',
                 backgroundColor: Colors.blue,
               ),
               BottomNavigationBarItem(

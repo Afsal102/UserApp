@@ -84,14 +84,8 @@ class CartPage extends StatelessWidget {
           padding: EdgeInsets.all(10),
           child:
               Obx(() => Text('My Cart(${cartController.cartprods.length})'))),
-      leading: IconButton(
-        icon: Icon(OMIcons.chevronLeft),
-        onPressed: () {
-          Get.back();
-        },
-      ),
       elevation: 0.0,
-      automaticallyImplyLeading: false,
+      automaticallyImplyLeading: true,
       toolbarOpacity: 0.8,
       actions: [
         Container(
@@ -151,9 +145,10 @@ class GridItemsForCart extends StatelessWidget {
                         },
                         builder: (_) {
                           return FocusedMenuItemHolder(
-                            onAddToCartPressed: ()async{
+                            onAddToCartPressed: () async {
                               Logger().i('Add t ocart pressed');
-                             await Database().addtoCart(controller.proucts[index]);
+                              await Database()
+                                  .addtoCart(controller.proucts[index]);
                             },
                             icon: controller.proucts[index].isFavourite.value
                                 ? Icon(
@@ -174,7 +169,7 @@ class GridItemsForCart extends StatelessWidget {
                                       .then((value) {
                                     controller.proucts[index].isFavourite
                                         .toggle();
-                                        cloeDialog();
+                                    cloeDialog();
                                   });
                                 } else {
                                   controller.proucts[index].isFavourite
