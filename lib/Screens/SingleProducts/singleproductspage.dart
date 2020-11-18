@@ -9,7 +9,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:groceryuser/Controller/loginController.dart';
 import 'package:groceryuser/Controller/product_controller.dart';
 import 'package:groceryuser/Models/productmodel.dart';
+import 'package:groceryuser/Screens/buynoowpage/BuyNowage.dart';
+import 'package:groceryuser/Screens/buynoowpage/components/checkoutcard.dart';
 import 'package:groceryuser/Services/database.dart';
+import 'package:groceryuser/components/gridTile.dart';
 import 'package:logger/logger.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
 
@@ -31,6 +34,7 @@ class SingleProductPage extends StatelessWidget {
         backgroundColor: Colors.grey[300],
         body: SafeArea(
           child: CustomScrollView(
+            cacheExtent: itemWidth*900,
             clipBehavior: Clip.antiAlias,
             scrollDirection: Axis.vertical,
             physics: BouncingScrollPhysics(),
@@ -60,6 +64,7 @@ class SingleProductPage extends StatelessWidget {
               ),
               //!All Contetns excluding list and gridview
               SliverToBoxAdapter(
+
                 child: Container(
                   padding: EdgeInsets.all(10),
                   child: Column(
@@ -256,8 +261,11 @@ class SingleProductPage extends StatelessWidget {
                           builder: (controller) {
                             if (controller != null &&
                                 controller.prods != null) {
-                              return gridItems(
-                                  controller.prods[index], context);
+                              // return gridItems(
+                              //     controller.prods[index], context);
+                              return GridCard(
+                                productModel: controller.prods[index],
+                              );
                             }
                             return Offstage(
                               offstage: true,
@@ -300,7 +308,18 @@ Widget bottomAppbar(ProductModel productModel) {
           SizedBox(
             width: 10,
           ),
-          Expanded(child: rasiedButton('Buy Now', null, () {})),
+          Expanded(
+              child: rasiedButton('Buy Now', null, () {
+            Logger().i(productModel.quantityperProduct);
+            Get.to(
+                BuyNow(
+                  page: 0,
+                  productModel: productModel,
+                ),
+                popGesture: true,
+                curve: Curves.elasticInOut,
+                preventDuplicates: true);
+          })),
         ],
       ),
     ),

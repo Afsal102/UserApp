@@ -3,8 +3,10 @@ import 'package:get/get.dart';
 import 'package:groceryuser/Controller/product_controller.dart';
 import 'package:groceryuser/Models/cart_model.dart';
 import 'package:groceryuser/Models/productmodel.dart';
+import 'package:groceryuser/Screens/buynoowpage/BuyNowage.dart';
 import 'package:groceryuser/Services/database.dart';
 import 'package:groceryuser/components/loading.dart';
+import 'package:logger/logger.dart';
 
 class CartController extends GetxController {
   Rx<List<CartModel>> cartItems = Rx<List<CartModel>>();
@@ -53,7 +55,6 @@ class CartController extends GetxController {
         productsAddedInCart.add(element);
         element.quantityperProduct.value = cartModel.prodQuantity;
       }
-      ;
     });
   }
 
@@ -110,6 +111,20 @@ class CartController extends GetxController {
     } else {
       Get.snackbar('No Items', 'No items To delete From cart',
           backgroundColor: Colors.blueGrey);
+    }
+  }
+
+//!Called when checkout is called ex : like for cart how many items areselected
+  proceedToCheckOut() {
+    if (productsAddedInCart.isEmpty) {
+      Get.snackbar('Select A product TO Go To CheckOut', 'TO Go To CheckOut');
+    } else {
+      Get.to(
+          BuyNow(
+            page: 1,
+            porductstoBuy: productsAddedInCart,
+          ),
+          popGesture: true);
     }
   }
 }

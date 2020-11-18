@@ -7,6 +7,7 @@ import 'package:groceryuser/Controller/cart_controller.dart';
 
 import 'package:groceryuser/Controller/loginController.dart';
 import 'package:groceryuser/Screens/Cart/cart_pg.dart';
+import 'package:groceryuser/Screens/buynoowpage/BuyNowage.dart';
 import 'package:logger/logger.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
 
@@ -28,6 +29,7 @@ class Search extends StatelessWidget {
             FlatButton(
                 onPressed: () {
                   // Logger().i(Get.find<CartController>().finallsall.value);
+                  // Get.to(BuyNow(page: 0,));
                 },
                 child: Text('Hello'))
           ],

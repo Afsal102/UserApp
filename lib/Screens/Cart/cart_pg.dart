@@ -40,7 +40,7 @@ class CartPage extends StatelessWidget {
                 GetX<CartController>(
                   builder: (controller) {
                     if (controller != null) {
-                      return controller.cartprods.isEmpty
+                      return controller.cartprods == null
                           ? Container(
                               margin: EdgeInsets.only(bottom: 10),
                               child: Center(
@@ -82,8 +82,8 @@ class CartPage extends StatelessWidget {
       backgroundColor: Colors.blueGrey[900].withOpacity(0.8),
       title: Container(
           padding: EdgeInsets.all(10),
-          child:
-              Obx(() => Text('My Cart(${cartController.cartprods.length})'))),
+          child: Obx(() => Text(
+              'My Cart(${cartController.cartprods != null ? cartController.cartprods.length ?? 0 : 0})'))),
       elevation: 0.0,
       automaticallyImplyLeading: true,
       toolbarOpacity: 0.8,
@@ -114,7 +114,7 @@ class GridItemsForCart extends StatelessWidget {
     return GetX<CartController>(
       builder: (controller) {
         if (controller != null) {
-          return controller.proucts.isNotEmpty
+          return controller.proucts != null
               ? Container(
                   child: GridView.builder(
                     shrinkWrap: true,
@@ -458,14 +458,18 @@ Widget bottomAppbar(CartController cartController) {
                 }, child: GetX<CartController>(
                   builder: (controller) {
                     if (controller != null) {
-                      return controller.productsAddedInCart.length ==
-                                  controller.cartprods.length &&
-                              controller.cartprods.length != 0
-                          ? Icon(
-                              OMIcons.checkCircleOutline,
-                              color: Colors.orange,
-                            )
-                          : Icon(OMIcons.radioButtonUnchecked);
+                      if (controller.cartprods != null &&
+                          controller.productsAddedInCart != null) {
+                        return controller.productsAddedInCart.length ==
+                                    controller.cartprods.length &&
+                                controller.cartprods.length != 0
+                            ? Icon(
+                                OMIcons.checkCircleOutline,
+                                color: Colors.orange,
+                              )
+                            : Icon(OMIcons.radioButtonUnchecked);
+                      } else
+                        return Offstage();
                     } else
                       return Icon(OMIcons.radioButtonUnchecked);
                   },
@@ -505,18 +509,7 @@ Widget bottomAppbar(CartController cartController) {
             ),
             Expanded(
                 child: rasiedButton('Buy Now', null, () {
-              // cartController.showLoading.toggle();
-
-              Get.dialog(
-                Loading(),
-                useSafeArea: false,
-                barrierDismissible: false,
-                name: 'Omg',
-              );
-              Future.delayed(Duration(seconds: 5), () {
-                Get.back(canPop: true);
-              });
-
+              cartController.proceedToCheckOut();
               // });
             })),
           ],
